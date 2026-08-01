@@ -1,0 +1,1 @@
+import{vn as e}from"./useShortcuts-C7D5nKEh.js";var t=(t,n,r=!0)=>r&&n===!0&&t!==e.INCOMPATIBLE,n=(n,r,i=!0)=>n===e.AUTH_REQUIRED&&t(n,r,i);export{n,t};
