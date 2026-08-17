@@ -54,6 +54,7 @@ import PlayerRenameDialog from "@/components/PlayerRenameDialog.vue";
 import PlayerGroupPlaybackDialog from "@/components/PlayerGroupPlaybackDialog.vue";
 import SetupFlowDialog from "@/components/SetupFlowDialog.vue";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { useHotkeys } from "@tanstack/vue-hotkeys";
 import {
   MediaType,
   type Playlist,
@@ -78,6 +79,85 @@ const route = useRoute();
 const showEditItemDialog = ref(false);
 const editItem = ref<Radio | Track | Playlist | undefined>(undefined);
 const editItemType = ref<MediaType>(MediaType.RADIO);
+
+useHotkeys(
+  [
+    {
+      hotkey: "Mod+K",
+      callback: (event) => {
+        eventbus.emit("open-command-center");
+        event.preventDefault();
+      },
+    },
+    {
+      hotkey: "Mod+B",
+      callback: (event) => {
+        eventbus.emit("toggle-left-sidebar");
+        event.preventDefault();
+      },
+    },
+    {
+      hotkey: "Mod+Shift+B",
+      callback: (event) => {
+        eventbus.emit("toggle-right-sidebar");
+        event.preventDefault();
+      },
+    },
+    {
+      hotkey: "Mod+Shift+F",
+      callback: (event) => {
+        if (!store.activePlayer) return;
+        store.showFullscreenPlayer = true;
+        event.preventDefault();
+      },
+    },
+    {
+      hotkey: "Mod+P",
+      callback: (event) => {
+        store.showPlayersMenu = true;
+        event.preventDefault();
+      },
+    },
+    {
+      hotkey: "Mod+Shift+P",
+      callback: (event) => {
+        eventbus.emit("keyboardShortcutsDialog");
+        event.preventDefault();
+      },
+    },
+    {
+      hotkey: "Mod+L",
+      callback: (event) => {
+        const searchInput = document.getElementById("searchInput");
+        if (!(searchInput instanceof HTMLInputElement)) return;
+        searchInput.focus();
+        searchInput.select();
+        event.preventDefault();
+      },
+    },
+    {
+      hotkey: "Mod+Q",
+      callback: (event) => {
+        if (!store.activePlayerQueue) return;
+        store.showQueueItems = !store.showQueueItems;
+        event.preventDefault();
+      },
+    },
+    {
+      hotkey: "Mod+Shift+L",
+      callback: (event) => {
+        eventbus.emit("openFullscreenLyrics");
+        event.preventDefault();
+      },
+    },
+  ],
+  {
+    preventDefault: false,
+    stopPropagation: false,
+    ignoreInputs: true,
+    conflictBehavior: "replace",
+  },
+);
 
 onMounted(() => {
   eventbus.on("editItemDialog", (item: Radio | Track | Playlist) => {

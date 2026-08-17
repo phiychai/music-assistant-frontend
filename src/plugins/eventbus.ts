@@ -111,9 +111,14 @@ export type Events = {
   playerRenameDialog: PlayerRenameDialogEvent;
   setupFlowDialog: SetupFlowDialogEvent;
   editItemDialog: Radio | Track | Playlist;
+  openFullscreenLyrics: void;
   clearSelection: void;
   genreExcluded: void;
   "mobile-sidebar-open": void;
+  keyboardShortcutsDialog: void;
+  "open-command-center": void;
+  "toggle-left-sidebar": void;
+  "toggle-right-sidebar": void;
 };
 
 export const eventbus: Emitter<Events> = mitt<Events>();

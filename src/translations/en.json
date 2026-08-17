@@ -2360,5 +2360,20 @@
     "offline_ready": "App ready to work offline",
     "update_available": "A new version is available. Reload to update.",
     "reload": "Reload",
-    "open_settings": "Settings"
+    "open_settings": "Settings",
+    "command_center_title": "Command Center",
+    "sidebar": "Sidebar",
+    "right_sidebar": "Right sidebar",
+    "open_fullscreen_player": "Open fullscreen player",
+    "previous_track": "Previous track",
+    "next_track": "Next track",
+    "keyboard_shortcuts": "Keyboard shortcuts",
+    "keyboard_shortcuts_description": "Playback and navigation shortcuts",
+    "shortcut_play_pause": "Play / pause",
+    "shortcut_seek_back": "Seek back 10 seconds",
+    "shortcut_seek_forward": "Seek forward 10 seconds",
+    "shortcut_volume_up": "Increase volume",
+    "shortcut_volume_down": "Decrease volume",
+    "shortcut_mute": "Mute / unmute",
+    "shortcut_toggle_queue": "Toggle queue"
 }

@@ -25,6 +25,8 @@ import { isPhoneSizedScreen } from "./breakpoint";
 interface Store {
   activePlayerId?: string;
   showPlayersMenu: boolean;
+  showRightQueueOverlay: boolean;
+  showRightPlayersOverlay: boolean;
   showFullscreenPlayer: boolean;
   frameless: boolean;
   showQueueItems: boolean;
@@ -35,6 +37,7 @@ interface Store {
   activePlayerQueue?: PlayerQueue;
   curQueueItem?: QueueItem;
   globalSearchTerm?: string;
+  globalSearchType?: MediaType;
   // media type filter for the global search; empty means all media types
   globalSearchMediaTypes: MediaType[];
   prevState?: StoredState;
@@ -63,6 +66,8 @@ interface Store {
 export const store: Store = reactive({
   activePlayerId: undefined,
   showPlayersMenu: false,
+  showRightQueueOverlay: false,
+  showRightPlayersOverlay: false,
   showFullscreenPlayer: false,
   frameless: false,
   showQueueItems: false,
@@ -82,6 +87,7 @@ export const store: Store = reactive({
     return undefined;
   }),
   globalSearchTerm: undefined,
+  globalSearchType: undefined,
   globalSearchMediaTypes: [],
   prevState: undefined,
   libraryArtistsCount: undefined,

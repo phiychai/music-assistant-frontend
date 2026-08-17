@@ -19,6 +19,7 @@ import { store } from "@/plugins/store";
 import { LogOut, MoreVertical, Settings, SquarePen } from "@lucide/vue";
 import { computed } from "vue";
 import { useRouter } from "vue-router";
+import NavKeyboardShortcuts from "./NavKeyboardShortcuts.vue";
 
 const isMenuEditMode = computed(() => store.navMenuEditMode);
 
@@ -116,6 +117,7 @@ const handleLogout = () => {
             <SquarePen class="size-4" />
             {{ $t(isMenuEditMode ? "menu_edit_disable" : "menu_edit_enable") }}
           </DropdownMenuItem>
+          <NavKeyboardShortcuts />
           <DropdownMenuItem
             v-if="!store.isIngressSession"
             @click="handleLogout"

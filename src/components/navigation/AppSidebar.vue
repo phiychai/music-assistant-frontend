@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import NavMain from "@/components/navigation/NavMain.vue";
 import NavShortcuts from "@/components/navigation/NavShortcuts.vue";
+import KeyboardShortcutsDialog from "@/components/navigation/KeyboardShortcutsDialog.vue";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -187,6 +188,7 @@ onUnmounted(() => {
       <SidebarTrigger v-else />
     </SidebarFooter>
   </Sidebar>
+  <KeyboardShortcutsDialog />
 </template>
 
 <style scoped>
