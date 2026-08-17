@@ -4,8 +4,13 @@ import { useI18n } from "vue-i18n";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 
 const RouterLinkComponent = markRaw(RouterLink);
-
+import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -16,7 +21,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useListDragReorder } from "@/composables/useListDragReorder";
-import { Eye, EyeOff, GripVertical } from "@lucide/vue";
+import { ChevronRight, Eye, EyeOff, GripVertical } from "@lucide/vue";
 import NavSectionHeader from "./NavSectionHeader.vue";
 import {
   setMenuItemHidden,
@@ -48,9 +53,21 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { isMobile, setOpenMobile } = useSidebar();
+const open = ref(true);
+const groupOpen = computed({
+  get: () =>
+    !!props.editMode || !props.label || !!props.labelHidden || open.value,
+  set: (value) => {
+    open.value = value;
+  },
+});
+const isActive = (url: string) => {
+  if (url.includes("?")) {
+    return route.fullPath === url;
+  }
 
-const isActive = (url: string) =>
-  route.path === url || route.path.startsWith(url + "/");
+  return route.path === url || route.path.startsWith(url + "/");
+};
 
 const handleClick = (item: NavItem, event: Event) => {
   if (item.openInNewTab) {
@@ -102,217 +119,153 @@ const draggedItem = computed(() =>
 </script>
 
 <template>
-  <SidebarGroup v-if="items.length > 0">
-    <!-- Section header: inline rename + label visibility toggle in edit mode -->
-    <NavSectionHeader
-      v-if="sectionId"
-      :section-id="sectionId"
-      :label="label ?? ''"
-      :default-label="defaultLabel ?? label ?? ''"
-      :label-hidden="labelHidden"
-      :edit-mode="editMode"
-    />
-    <SidebarGroupLabel v-else-if="label">{{ label }}</SidebarGroupLabel>
-
-    <SidebarGroupContent class="flex flex-col gap-0.5">
-      <!-- Edit mode: static rows with drag handle + visibility toggle -->
-      <div v-if="editMode" ref="listEl" class="relative">
-        <SidebarMenu>
-          <SidebarMenuItem
-            v-for="(item, index) in items"
-            :key="item.id ?? item.title"
-            :data-drag-index="index"
-            class="mr-1.5 nav-edit-row"
-            :class="{ 'nav-edit-row-dragging': draggingIndex === index }"
-            :style="{
-              transform: `translateY(${rowOffset(index)}px)`,
-              transition:
-                isDragging && draggingIndex !== index
-                  ? 'transform 200ms ease-out'
-                  : 'none',
-            }"
-          >
-            <div
-              class="nav-edit-row-inner"
-              :class="{ 'nav-edit-row-off': item.hidden }"
-            >
-              <button
-                class="nav-edit-drag-handle"
-                :aria-label="t('queue_reorder')"
-                @pointerdown.stop.prevent="startItemDrag($event, index)"
-                @click.stop
-              >
-                <GripVertical class="size-4" />
-              </button>
-              <component
-                :is="item.icon"
-                v-if="item.icon"
-                class="nav-edit-row-icon"
-              />
-              <span class="nav-edit-row-title">{{ item.title }}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                class="h-6 w-6 shrink-0"
-                :title="t(item.hidden ? 'menu_item_show' : 'menu_item_hide')"
-                @click.stop="toggleItemHidden(item)"
-              >
-                <Eye v-if="!item.hidden" class="size-4" />
-                <EyeOff v-else class="size-4" />
-              </Button>
-            </div>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <!-- Floating ghost that follows the pointer while dragging -->
-        <div
-          v-if="isDragging && draggedItem"
-          class="nav-edit-ghost bg-sidebar-accent text-sidebar-accent-foreground"
-          :style="{ top: `${ghostY}px`, height: `${dragRowHeight}px` }"
+  <SidebarGroup
+    v-if="items.length > 0"
+    class="[&_a]:text-inherit! [&_a]:no-underline! [&_a:hover]:no-underline! [&_a:visited]:text-inherit! [&_[data-sidebar=menu-item]]:flex! [&_[data-sidebar=menu-item]]:flex-col! px-3 py-0"
+  >
+    <Collapsible v-model:open="groupOpen" class="group/collapsible">
+      <!-- Section header: inline rename + label visibility toggle in edit mode -->
+      <NavSectionHeader
+        v-if="sectionId && editMode"
+        :section-id="sectionId"
+        :label="label ?? ''"
+        :default-label="defaultLabel ?? label ?? ''"
+        :label-hidden="labelHidden"
+        :edit-mode="editMode"
+      />
+      <CollapsibleTrigger
+        v-else-if="label && !labelHidden"
+        class="group/heading flex w-full cursor-pointer items-center border-0 bg-transparent text-left text-inherit transition-colors duration-150 ease-out hover:text-sidebar-foreground"
+        :aria-label="`${label} collapse toggle`"
+      >
+        <SidebarGroupLabel
+          as="span"
+          class="group-hover/heading:text-sidebar-foreground group-hover/heading:font-semibold inline-flex min-w-0 items-center gap-1 text-sm h-10 mb-1 transition-[color,font-weight] duration-150"
         >
-          <GripVertical class="size-4 opacity-60" />
-          <component
-            :is="draggedItem.icon"
-            v-if="draggedItem.icon"
-            class="nav-edit-row-icon"
-          />
-          <span class="nav-edit-row-title">{{ draggedItem.title }}</span>
-        </div>
-      </div>
-
-      <!-- Normal mode: navigation links -->
-      <SidebarMenu v-else>
-        <SidebarMenuItem v-for="item in items" :key="item.title" class="mr-1.5">
-          <SidebarMenuButton
-            :as="
-              item.disabled || item.openInNewTab
-                ? 'button'
-                : RouterLinkComponent
-            "
-            v-bind="item.disabled || item.openInNewTab ? {} : { to: item.url }"
-            :is-active="isActive(item.url)"
-            :tooltip="item.title"
-            :disabled="item.disabled"
-            :class="[
-              isActive(item.url)
-                ? 'no-underline font-bold text-sm'
-                : 'no-underline font-medium text-sm',
-              item.disabled ? 'opacity-50 cursor-not-allowed' : '',
-            ]"
-            @click="(e: Event) => handleClick(item, e)"
+          {{ label }}
+          <span
+            class="text-sidebar-foreground/70 group-hover/heading:text-sidebar-foreground inline-flex size-5 items-center justify-center rounded-sm transition-colors duration-150 ease-out"
           >
-            <component
-              :is="item.icon"
-              v-if="item.icon"
-              class="mr-1"
-              :stroke-width="isActive(item.url) ? 2.5 : 2"
+            <ChevronRight
+              class="size-3.5 basis-auto shrink-0 grow-0 transition-transform duration-150 ease-[ease]"
+              :class="{ 'rotate-90': open }"
             />
-            <span>{{ item.title }}</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </SidebarGroupContent>
+          </span>
+        </SidebarGroupLabel>
+      </CollapsibleTrigger>
+      <SidebarGroupLabel v-else-if="label && editMode">
+        {{ label }}
+      </SidebarGroupLabel>
+
+      <CollapsibleContent as-child>
+        <SidebarGroupContent class="flex flex-col gap-0.5">
+          <!-- Edit mode: static rows with drag handle + visibility toggle -->
+          <div v-if="editMode" ref="listEl" class="relative">
+            <SidebarMenu>
+              <SidebarMenuItem
+                v-for="(item, index) in items"
+                :key="item.id ?? item.title"
+                :data-drag-index="index"
+                class="relative mr-1.5 select-none"
+                :class="{ 'opacity-35': draggingIndex === index }"
+                :style="{
+                  transform: `translateY(${rowOffset(index)}px)`,
+                  transition:
+                    isDragging && draggingIndex !== index
+                      ? 'transform 200ms ease-out'
+                      : 'none',
+                }"
+              >
+                <div
+                  class="ml-2 flex min-h-8 items-center gap-1.5 px-1 py-0.5 text-sm font-medium"
+                  :class="{ 'opacity-40': item.hidden }"
+                >
+                  <button
+                    class="inline-flex touch-none cursor-grab items-center justify-center border-0 bg-transparent px-0.5 py-1 text-inherit opacity-60 active:cursor-grabbing"
+                    :aria-label="t('queue_reorder')"
+                    @pointerdown.stop.prevent="startItemDrag($event, index)"
+                    @click.stop
+                  >
+                    <GripVertical class="size-4" />
+                  </button>
+                  <component
+                    :is="item.icon"
+                    v-if="item.icon"
+                    class="size-[18px] shrink-0"
+                  />
+                  <span class="min-w-0 flex-1 truncate">{{ item.title }}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    class="h-6 w-6 shrink-0"
+                    :title="
+                      t(item.hidden ? 'menu_item_show' : 'menu_item_hide')
+                    "
+                    @click.stop="toggleItemHidden(item)"
+                  >
+                    <Eye v-if="!item.hidden" class="size-4" />
+                    <EyeOff v-else class="size-4" />
+                  </Button>
+                </div>
+              </SidebarMenuItem>
+            </SidebarMenu>
+            <!-- Floating ghost that follows the pointer while dragging -->
+            <div
+              v-if="isDragging && draggedItem"
+              class="bg-sidebar-accent text-sidebar-accent-foreground pointer-events-none absolute right-1.5 left-1 z-50 flex cursor-grabbing items-center gap-1.5 rounded-lg px-2 py-0.5 text-sm font-medium opacity-95 shadow-[0_4px_14px_rgba(0,0,0,0.25)]"
+              :style="{ top: `${ghostY}px`, height: `${dragRowHeight}px` }"
+            >
+              <GripVertical class="size-4 opacity-60" />
+              <component
+                :is="draggedItem.icon"
+                v-if="draggedItem.icon"
+                class="size-[18px] shrink-0"
+              />
+              <span class="min-w-0 flex-1 truncate">{{
+                draggedItem.title
+              }}</span>
+            </div>
+          </div>
+
+          <!-- Normal mode: navigation links -->
+          <SidebarMenu v-else>
+            <SidebarMenuItem v-for="item in items" :key="item.title">
+              <SidebarMenuButton
+                :as="
+                  item.disabled || item.openInNewTab
+                    ? 'button'
+                    : RouterLinkComponent
+                "
+                v-bind="
+                  item.disabled || item.openInNewTab ? {} : { to: item.url }
+                "
+                :is-active="isActive(item.url)"
+                :tooltip="item.title"
+                :disabled="item.disabled"
+                class="gap-4"
+                :class="[
+                  isActive(item.url)
+                    ? 'no-underline font-bold text-sm'
+                    : 'no-underline font-medium text-sm',
+                  item.disabled ? 'opacity-50 cursor-not-allowed' : '',
+                ]"
+                @click="(e: Event) => handleClick(item, e)"
+              >
+                <div class="h-6 w-6 shrink-0 flex items-center justify-center">
+                  <component
+                    :is="item.icon"
+                    v-if="item.icon"
+                    class="size-[18px] gap-3"
+                    :stroke-width="isActive(item.url) ? 2.5 : 2"
+                  />
+                </div>
+                <span>{{ item.title }}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </CollapsibleContent>
+    </Collapsible>
   </SidebarGroup>
+  <Separator class="my-1" />
 </template>
-
-<style scoped>
-:deep(a) {
-  text-decoration: none !important;
-  color: inherit !important;
-}
-
-:deep(a:hover) {
-  text-decoration: none !important;
-}
-
-:deep(a:visited) {
-  color: inherit !important;
-}
-
-:deep([data-sidebar="menu-button"] > svg),
-:deep([data-sidebar="menu-button"] svg),
-:deep([data-sidebar="menu-button"] [class*="lucide"]) {
-  width: 1.2rem !important;
-  height: 1.2rem !important;
-  padding-right: 3px !important;
-}
-
-:deep([data-sidebar="menu-item"]) {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-/* ---- edit mode ---- */
-
-.nav-edit-row {
-  position: relative;
-  user-select: none;
-}
-
-.nav-edit-row-dragging {
-  opacity: 0.35;
-}
-
-.nav-edit-row-inner {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  min-height: 2rem;
-  margin-left: 0.5rem;
-  padding: 0.125rem 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.nav-edit-row-off {
-  opacity: 0.4;
-}
-
-.nav-edit-drag-handle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem 0.125rem;
-  border: none;
-  background: transparent;
-  color: inherit;
-  opacity: 0.6;
-  cursor: grab;
-  touch-action: none;
-}
-
-.nav-edit-drag-handle:active {
-  cursor: grabbing;
-}
-
-.nav-edit-row-icon {
-  width: 1.2rem;
-  height: 1.2rem;
-  flex-shrink: 0;
-}
-
-.nav-edit-row-title {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.nav-edit-ghost {
-  position: absolute;
-  left: 0.25rem;
-  right: 0.375rem;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  opacity: 0.95;
-  pointer-events: none;
-  cursor: grabbing;
-}
-</style>

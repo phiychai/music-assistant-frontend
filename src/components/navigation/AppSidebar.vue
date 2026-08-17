@@ -1,25 +1,32 @@
 <script setup lang="ts">
 import NavMain from "@/components/navigation/NavMain.vue";
 import NavShortcuts from "@/components/navigation/NavShortcuts.vue";
+import AppLogo from "@/components/AppLogo.vue";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarInput,
   SidebarMenu,
-  SidebarTrigger,
+  SidebarMenuButton,
+  SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useThemePreference } from "@/composables/useThemePreference";
+import { authManager } from "@/plugins/auth";
 import { eventbus } from "@/plugins/eventbus";
 import { haState } from "@/plugins/homeassistant";
 import { store } from "@/plugins/store";
-import { Check } from "@lucide/vue";
+import { Check, LogOut, Moon, PanelLeft, Search, Sun } from "@lucide/vue";
 import { computed, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import NavHomeAssistant from "./NavHomeAssistant.vue";
 import NavMobile from "./NavMobile.vue";
+import NavHeaderMenu from "./NavHeaderMenu.vue";
 import {
   getMenuItems,
   resolveMenuConfig,
@@ -46,8 +53,15 @@ const navItems = computed(() =>
     })),
 );
 
+const searchItem = computed(() =>
+  navItems.value.find((item) => item.url === "/search"),
+);
 const discoverItems = computed(() =>
-  navItems.value.filter((item) => item.group === "explore"),
+  navItems.value.filter(
+    (item) =>
+      item.group === "explore" &&
+      (editMode.value || item.url !== searchItem.value?.url),
+  ),
 );
 const libraryItems = computed(() =>
   navItems.value.filter((item) => item.group === "library"),
@@ -84,8 +98,12 @@ const sections = computed(() => {
   return resolved;
 });
 
-const { toggleSidebar, setOpen, state, isMobile } = useSidebar();
+const { toggleSidebar, setOpen, state, isMobile, setOpenMobile } = useSidebar();
+const { isDarkTheme, setThemePreference } = useThemePreference();
 const collapsed = computed(() => state.value === "collapsed");
+const themeToggleLabel = computed(() =>
+  t(`settings.theme.options.${isDarkTheme.value ? "light" : "dark"}`),
+);
 
 // Editing needs the full (labeled) menu, so pop the sidebar open when edit
 // mode is entered from anywhere (profile menu, settings page shortcut), and
@@ -103,6 +121,24 @@ const handleOpenSidebar = () => {
   }
 };
 
+const openSearchPage = () => {
+  if (searchItem.value?.disabled) return;
+  if (isMobile.value) {
+    setOpenMobile(false);
+  }
+  router.push(searchItem.value?.url ?? "/search");
+};
+
+const toggleTheme = () =>
+  setThemePreference(isDarkTheme.value ? "light" : "dark");
+
+const handleFooterLogout = () => {
+  if (isMobile.value) {
+    setOpenMobile(false);
+  }
+  authManager.logout();
+};
+
 onMounted(() => {
   eventbus.on("mobile-sidebar-open", handleOpenSidebar);
 });
@@ -117,30 +153,72 @@ onUnmounted(() => {
   <Sidebar collapsible="icon">
     <SidebarHeader>
       <SidebarMenu>
-        <div class="sidebar-header-row">
-          <div
-            class="sidebar-header"
-            :style="{ marginLeft: collapsed ? '2px' : '7px' }"
-            @click="router.push('/')"
-          >
-            <img
-              src="@/assets/icon.svg"
-              alt="Music Assistant"
-              class="sidebar-header-logo"
-            />
-            <div v-if="!collapsed" class="sidebar-header-title">
-              Music Assistant
+        <SidebarMenuItem :class="{ 'mb-3': !collapsed }">
+          <div class="flex w-full items-center justify-between gap-2">
+            <div
+              class="relative flex min-w-0 cursor-pointer items-center gap-1.5 transition-opacity duration-300 ease-[ease]"
+              @click="router.push('/')"
+            >
+              <AppLogo />
+              <div
+                v-if="!collapsed"
+                class="mt-[3px] ml-2.5 overflow-hidden text-[1.2rem] font-bold whitespace-nowrap transition-opacity duration-200 ease-[ease]"
+              >
+                Music Assistant
+              </div>
+            </div>
+            <NavHeaderMenu v-if="!collapsed" />
+          </div>
+        </SidebarMenuItem>
+        <SidebarMenuItem v-if="collapsed" class="mb-3 flex w-full items-center">
+          <NavHeaderMenu />
+        </SidebarMenuItem>
+        <SidebarMenuItem v-if="searchItem && !editMode">
+          <div v-if="!collapsed" class="flex items-center gap-3">
+            <div class="relative min-w-0 flex-auto">
+              <SidebarInput
+                readonly
+                :placeholder="`${t('search')}...`"
+                :aria-label="searchItem.title"
+                class="sidebar-search-input text-muted-foreground cursor-pointer pr-[4.75rem]! h-10"
+                @click="openSearchPage"
+                @keydown.enter.prevent="openSearchPage"
+                @keydown.space.prevent="openSearchPage"
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                :title="t('command_center.open_full_search')"
+                :aria-label="t('command_center.open_full_search')"
+                data-testid="sidebar-search-open"
+                class="hover:text-foreground absolute top-1/2 right-1.5 -translate-y-1/2"
+                @click.stop="openSearchPage"
+              >
+                <Search />
+              </Button>
             </div>
           </div>
-        </div>
+          <template v-else>
+            <SidebarMenuButton
+              as="button"
+              type="button"
+              :tooltip="searchItem.title"
+              :disabled="searchItem.disabled"
+              :aria-label="searchItem.title"
+              class="mx-0!"
+              @click="openSearchPage"
+            >
+              <component :is="searchItem.icon" class="mr-1" />
+            </SidebarMenuButton>
+          </template>
+        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarHeader>
-    <SidebarContent>
+    <SidebarContent class="scroll-fade">
       <NavMain
         :items="discoverItems"
         :label="sections.explore.label"
         :default-label="sections.explore.defaultLabel"
-        :label-hidden="sections.explore.labelHidden"
         section-id="explore"
         :edit-mode="editMode"
         class="mt-1"
@@ -171,10 +249,10 @@ onUnmounted(() => {
       />
       <NavShortcuts :edit-mode="editMode" />
     </SidebarContent>
-    <SidebarFooter>
+    <SidebarFooter class="pb-3">
       <Button
         v-if="editMode"
-        class="menu-edit-done"
+        class="w-full rounded-full"
         @click="store.navMenuEditMode = false"
       >
         <Check class="size-4" />
@@ -183,26 +261,53 @@ onUnmounted(() => {
       <!-- Kiosk mode leaves no Home Assistant chrome on screen, so this is the
            only way back to it. -->
       <NavHomeAssistant v-if="haState.kioskModeEnabled" />
-      <NavMobile v-if="isMobile" />
-      <SidebarTrigger v-else />
+      <NavMobile v-else-if="isMobile" />
+      <ButtonGroup
+        v-else
+        :orientation="collapsed ? 'vertical' : 'horizontal'"
+        class="w-full items-center justify-center gap-4 px-2 pt-1 [&>button]:rounded-md"
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Toggle sidebar"
+          aria-label="Toggle sidebar"
+          data-testid="sidebar-footer-collapse"
+          class="basis-auto shrink-0 grow-0"
+          @click="toggleSidebar"
+        >
+          <PanelLeft />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          :title="themeToggleLabel"
+          :aria-label="themeToggleLabel"
+          data-testid="sidebar-footer-theme"
+          class="basis-auto shrink-0 grow-0"
+          @click="toggleTheme"
+        >
+          <Sun v-if="isDarkTheme" />
+          <Moon v-else />
+        </Button>
+        <Button
+          v-if="!store.isIngressSession"
+          variant="ghost"
+          size="icon"
+          title="Sign out"
+          aria-label="Sign out"
+          data-testid="sidebar-footer-logout"
+          class="basis-auto shrink-0 grow-0"
+          @click="handleFooterLogout"
+        >
+          <LogOut />
+        </Button>
+      </ButtonGroup>
     </SidebarFooter>
   </Sidebar>
 </template>
 
 <style scoped>
-.sidebar-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.sidebar-header-logo {
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-}
-
 .sidebar-header-title {
   font-size: 1.2rem;
   font-weight: bold;
@@ -287,9 +392,11 @@ onUnmounted(() => {
     height: 1.4rem !important;
   }
 }
-</style>
 
-<style>
+.sidebar-search-input[data-sidebar="input"] {
+  background-color: transparent !important;
+}
+
 [data-mobile="true"] [data-sidebar="footer"] [data-sidebar="menu-button"] {
   margin-left: 0 !important;
 }

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   changeTheme: vi.fn(),
+  currentTheme: { value: { dark: false } },
   colorMode: { value: "auto" },
   colorModeOptions: undefined as unknown,
   isGuestSession: { value: false },
@@ -11,6 +12,11 @@ const mocks = vi.hoisted(() => ({
       preferences: {} as Record<string, unknown>,
     },
   },
+  setUserPreference: vi.fn(),
+}));
+
+vi.mock("@/composables/userPreferences", () => ({
+  setUserPreference: mocks.setUserPreference,
 }));
 
 vi.mock("@/plugins/auth", () => ({
@@ -39,6 +45,7 @@ vi.mock("vuetify", () => ({
         dark: { colors: { background: "#181818" } },
       },
     },
+    current: mocks.currentTheme,
   }),
 }));
 
@@ -47,6 +54,7 @@ describe("useThemePreference", () => {
     vi.clearAllMocks();
     vi.stubGlobal("localStorage", createStorage());
     mocks.colorMode.value = "auto";
+    mocks.currentTheme.value.dark = false;
     mocks.colorModeOptions = undefined;
     mocks.isGuestSession.value = false;
     mocks.store.currentUser.preferences = {};
@@ -122,6 +130,17 @@ describe("useThemePreference", () => {
     expect(localStorage.getItem("frontend.settings.guest_theme")).toBe("dark");
     expect(themePreference.value).toBe("dark");
     expect(mocks.changeTheme).toHaveBeenCalledWith("dark");
+  });
+
+  it("persists and applies a regular appearance selection", async () => {
+    const { setThemePreference, themePreference } = useThemePreference();
+
+    await setThemePreference("dark");
+
+    expect(localStorage.getItem("frontend.settings.theme")).toBe("dark");
+    expect(themePreference.value).toBe("dark");
+    expect(mocks.changeTheme).toHaveBeenCalledWith("dark");
+    expect(mocks.setUserPreference).toHaveBeenCalledWith("theme", "dark");
   });
 
   it("follows the system appearance in auto mode", () => {
