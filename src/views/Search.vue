@@ -1,5 +1,6 @@
 <template>
   <section>
+    <Toolbar variant="page" navigation="home" :title="$t('search')" />
     <Container variant="default" style="padding-top: 20px">
       <SearchInput
         id="searchInput"
@@ -27,13 +28,10 @@
         />
       </div>
 
-      <v-progress-linear
+      <Progress
         v-if="loading"
-        color="accent"
-        height="4"
         indeterminate
-        rounded
-        style="margin-top: 15px"
+        class="mt-[15px] h-1 rounded-none"
       />
 
       <!-- compact searchresult shelves per media type -->
@@ -86,6 +84,8 @@ import EditorialMediaCard from "@/components/discover/EditorialMediaCard.vue";
 import EditorialShelf from "@/components/discover/EditorialShelf.vue";
 import FacetedFilter from "@/components/FacetedFilter.vue";
 import ItemsListing from "@/components/ItemsListing.vue";
+import Toolbar from "@/components/Toolbar.vue";
+import { Progress } from "@/components/ui/progress";
 import { SearchInput } from "@/components/ui/search-input";
 import {
   LIBRARY_SEARCH_TARGET,

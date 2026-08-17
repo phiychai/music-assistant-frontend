@@ -1,6 +1,7 @@
 <template>
   <section>
     <ItemsListing
+      header-variant="page"
       itemtype="browse"
       :show-provider="false"
       :show-library="false"

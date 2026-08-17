@@ -38,7 +38,7 @@ const { containerProps, containerClasses } = useContainer(props, isDark.value);
 
 <style scoped>
 .container-default {
-  padding: 10px;
+  padding: 24px;
 }
 
 .container-compact {
@@ -50,7 +50,7 @@ const { containerProps, containerClasses } = useContainer(props, isDark.value);
 }
 
 .container-panel {
-  padding: 10px;
+  padding: 24px;
 }
 
 .container-panel--light {

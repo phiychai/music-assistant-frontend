@@ -1,151 +1,240 @@
 <template>
-  <v-toolbar :color="color" class="header">
-    <template v-if="icon" #prepend>
-      <v-btn
-        :icon="typeof icon === 'string' ? icon : undefined"
-        size="small"
-        :disabled="iconAction == null"
-        style="opacity: 0.8"
-        @click="iconAction?.()"
-      >
-        <component :is="icon" v-if="typeof icon !== 'string'" class="w-6 h-6" />
-      </v-btn>
-    </template>
+  <header
+    :class="[
+      'header',
+      { 'header--page': isPageHeader },
+      { 'header--info': isInfoHeader },
+      { 'header--scrolled': isScrolled },
+    ]"
+  >
+    <div class="header__content">
+      <Breadcrumb v-if="isPageHeader" class="header__breadcrumb">
+        <BreadcrumbList class="header__breadcrumb-list">
+          <BreadcrumbItem>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Back"
+              title="Back"
+              :disabled="!canGoBack"
+              class="toolbar-navigation"
+              @click="handleBack"
+            >
+              <ArrowLeft aria-hidden="true" />
+            </Button>
+          </BreadcrumbItem>
+          <BreadcrumbItem>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Home"
+              title="Home"
+              :disabled="!canGoHome"
+              class="toolbar-navigation"
+              @click="handleHome"
+            >
+              <House aria-hidden="true" />
+            </Button>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator class="header__breadcrumb-separator">
+            <Separator orientation="vertical" class="h-10 self-center" />
+          </BreadcrumbSeparator>
+          <BreadcrumbItem class="header__breadcrumb-page">
+            <BreadcrumbPage
+              class="header__title"
+              :class="{ 'toolbar-title-wrapper': subtitle }"
+              @click="!$slots.title && emit('titleClicked')"
+            >
+              <slot name="title">
+                <span v-if="title || isDiscoverPage">
+                  {{ title || (isDiscoverPage ? $t("discover") : "") }}
+                </span>
+              </slot>
+              <span v-if="subtitle" class="toolbar-subtitle">{{
+                subtitle
+              }}</span>
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+      <div v-else-if="icon" class="header__prepend">
+        <Button
+          variant="ghost"
+          size="icon"
+          :disabled="iconAction == null"
+          class="toolbar-navigation"
+          @click="iconAction?.()"
+        >
+          <v-icon v-if="typeof icon === 'string'" :icon="icon" size="22px" />
+          <component :is="icon" v-else />
+        </Button>
+      </div>
 
-    <template #title>
-      <div :class="{ 'toolbar-title-wrapper': subtitle }">
+      <div
+        v-if="!isPageHeader"
+        class="header__title"
+        :class="{ 'toolbar-title-wrapper': subtitle }"
+      >
         <slot name="title">
-          <button
-            v-if="title || (store.mobileLayout && isDiscoverPage)"
-            @click="emit('titleClicked')"
-          >
+          <button v-if="title || isDiscoverPage" @click="emit('titleClicked')">
             {{ title || (isDiscoverPage ? $t("discover") : "") }}
           </button>
         </slot>
         <span v-if="subtitle" class="toolbar-subtitle">{{ subtitle }}</span>
       </div>
-    </template>
 
-    <template v-if="$slots.append || menuItems?.length" #append>
-      <slot name="append"></slot>
-      <v-btn
-        v-for="menuItem of menuItems?.filter(
-          (x) =>
-            !x.hide &&
-            (x.overflowAllowed === false ||
-              (!enforceOverflowMenu && getBreakpointValue('bp8'))),
-        )"
-        :key="menuItem.label"
-        variant="text"
-        style="width: 40px"
-        :title="menuItemLabel(menuItem)"
-        :disabled="menuItem.disabled == true"
-        @click="(e: MouseEvent) => onMenuItemClick(e, menuItem)"
-      >
-        <v-badge :model-value="menuItem.active == true" color="primary" dot>
-          <v-icon
-            v-if="typeof menuItem.icon === 'string'"
-            :icon="menuItem.icon"
-            :color="$vuetify.theme.current.dark ? '#fff' : '#000'"
-            size="22px"
-          />
-          <component
-            :is="menuItem.icon"
-            v-else-if="menuItem.icon"
-            class="w-[22px] h-[22px]"
-            :color="$vuetify.theme.current.dark ? '#fff' : '#000'"
-          />
-        </v-badge>
-      </v-btn>
-
-      <!-- overflow menu with (remaining) items if on mobile -->
-      <div
-        v-if="
-          (!getBreakpointValue('bp8') || enforceOverflowMenu) &&
-          menuItems?.filter(
-            (x) => x.hide != true && x.overflowAllowed !== false,
-          ).length
-        "
-      >
-        <v-menu
-          v-model="overflowMenuOpen"
-          location="bottom end"
-          scrim
-          :close-on-content-click="false"
+      <div v-if="$slots.append || menuItems?.length" class="header__append">
+        <slot name="append"></slot>
+        <Button
+          v-for="menuItem of visibleMenuItems"
+          :key="menuItem.label"
+          variant="ghost"
+          size="icon"
+          :title="menuItemTitle(menuItem)"
+          :aria-label="menuItemTitle(menuItem)"
+          :disabled="menuItem.disabled == true"
+          @click="(e: MouseEvent) => onMenuItemClick(e, menuItem)"
         >
-          <template #activator="{ props }">
-            <v-btn
-              variant="plain"
-              style="width: 15px; margin-left: -10px"
-              v-bind="props"
-            >
-              <v-badge :model-value="menuActive == true" color="primary" dot>
-                <v-icon
-                  icon="mdi-dots-vertical"
-                  :color="$vuetify.theme.current.dark ? '#fff' : '#000'"
-                  size="22"
-                  style="margin-right: -5px; width: 15px"
-                />
-              </v-badge>
-            </v-btn>
-          </template>
-          <v-list density="compact" slim tile>
-            <v-list-item
-              v-for="(menuItem, index) in menuItems?.filter(
-                (x) => x.hide != true && x.overflowAllowed != false,
-              )"
-              :key="index"
-              :title="menuItemLabel(menuItem)"
-              :disabled="menuItem.disabled == true"
-              :append-icon="
-                menuItem.subItems?.length ? 'mdi-chevron-right' : undefined
-              "
-              @click.prevent.stop="
-                (e: MouseEvent | KeyboardEvent) => onMenuItemClick(e, menuItem)
-              "
-            >
-              <template v-if="menuItem.icon" #prepend>
-                <v-badge
-                  :model-value="menuItem.active == true"
-                  color="primary"
-                  dot
-                >
+          <v-badge :model-value="menuItem.active == true" color="primary" dot>
+            <v-icon
+              v-if="typeof menuItem.icon === 'string'"
+              :icon="menuItem.icon"
+              size="22px"
+            />
+            <component :is="menuItem.icon" v-else-if="menuItem.icon" />
+          </v-badge>
+        </Button>
+
+        <div v-if="overflowItems.length" class="header__overflow">
+          <v-menu
+            v-model="overflowMenuOpen"
+            location="bottom end"
+            scrim
+            :close-on-content-click="false"
+          >
+            <template #activator="{ props: activatorProps }">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="More actions"
+                title="More actions"
+                v-bind="activatorProps"
+              >
+                <v-badge :model-value="menuActive == true" color="primary" dot>
+                  <MoreVertical aria-hidden="true" />
+                </v-badge>
+              </Button>
+            </template>
+            <v-list density="compact" slim tile>
+              <v-list-item
+                v-for="(menuItem, index) in overflowItems"
+                :key="index"
+                :title="menuItemTitle(menuItem)"
+                :disabled="menuItem.disabled == true"
+                :append-icon="
+                  menuItem.subItems?.length ? 'mdi-chevron-right' : undefined
+                "
+                @click.prevent.stop="
+                  (e: MouseEvent | KeyboardEvent) =>
+                    onMenuItemClick(e, menuItem)
+                "
+              >
+                <template v-if="menuItem.icon" #prepend>
                   <v-icon
                     v-if="typeof menuItem.icon === 'string'"
                     :icon="menuItem.icon"
-                    :color="$vuetify.theme.current.dark ? '#fff' : '#000'"
                     size="22px"
                   />
-                  <component
-                    :is="menuItem.icon"
-                    v-else
-                    class="w-[22px] h-[22px]"
-                    :color="$vuetify.theme.current.dark ? '#fff' : '#000'"
-                  />
-                </v-badge>
-              </template>
-            </v-list-item>
-          </v-list>
-        </v-menu>
+                  <component :is="menuItem.icon" v-else />
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </div>
       </div>
-    </template>
-  </v-toolbar>
+    </div>
+  </header>
 </template>
 
 <script setup lang="ts">
+import type { ContextMenuItem } from "@/helpers/context_menu_item";
+import { Button } from "@/components/ui/button";
 import {
-  menuItemLabel,
-  type ContextMenuItem,
-} from "@/helpers/context_menu_item";
-import { api } from "@/plugins/api";
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import { useContentScrollState } from "@/composables/useContentScrollState";
 import { eventbus } from "@/plugins/eventbus";
-import { store } from "@/plugins/store";
-import { getBreakpointValue } from "../plugins/breakpoint";
+import { getBreakpointValue } from "@/plugins/breakpoint";
+import { ArrowLeft, House, MoreVertical } from "@lucide/vue";
+import { computed, onBeforeUnmount, ref, type Component } from "vue";
+import { useRouter } from "vue-router";
 
-import type { Component } from "vue";
-import { ref } from "vue";
+interface Props {
+  variant?: "section" | "page" | "info";
+  navigation?: "home" | "back";
+  color?: string;
+  icon?: string | Component;
+  title?: string;
+  subtitle?: string;
+  menuItems?: ToolBarMenuItem[];
+  enforceOverflowMenu?: boolean;
+  menuActive?: boolean;
+  isDiscoverPage?: boolean;
+  iconAction?: () => void;
+}
 
+const props = withDefaults(defineProps<Props>(), {
+  variant: "section",
+  navigation: undefined,
+  color: "transparent",
+  icon: undefined,
+  title: undefined,
+  subtitle: undefined,
+  menuItems: undefined,
+  enforceOverflowMenu: false,
+  menuActive: false,
+  isDiscoverPage: false,
+  iconAction: undefined,
+});
+
+const emit = defineEmits<{
+  (e: "iconClicked"): void;
+  (e: "titleClicked"): void;
+}>();
+
+const router = useRouter();
+const scrollState = useContentScrollState();
 const overflowMenuOpen = ref(false);
+const navigationHistory = ref({ canGoBack: false });
+const isPageHeader = computed(() => props.variant !== "section");
+const isInfoHeader = computed(() => props.variant === "info");
+const isScrolled = computed(() => scrollState?.isScrolled.value ?? false);
+const canGoBack = computed(
+  () => props.iconAction != null || navigationHistory.value.canGoBack,
+);
+const canGoHome = computed(
+  () => router.currentRoute.value?.name?.toString() !== "discover",
+);
+const visibleMenuItems = computed(() =>
+  (props.menuItems ?? []).filter(
+    (item) =>
+      !item.hide &&
+      (item.overflowAllowed === false ||
+        (!props.enforceOverflowMenu && getBreakpointValue("bp8"))),
+  ),
+);
+const overflowItems = computed(() =>
+  (props.menuItems ?? []).filter(
+    (item) => !item.hide && item.overflowAllowed !== false,
+  ),
+);
+
+const menuItemTitle = (item: ToolBarMenuItem) => item.label;
 
 const onMenuItemClick = (
   event: MouseEvent | KeyboardEvent,
@@ -153,60 +242,36 @@ const onMenuItemClick = (
 ) => {
   event.preventDefault();
   if (menuItem.subItems?.length) {
-    // Open submenu via global context menu
-    // Map closeOnContentClick to close_on_click on subItems if needed
-    const items =
-      menuItem.closeOnContentClick === false
-        ? menuItem.subItems.map((item) => ({
-            ...item,
-            close_on_click: item.close_on_click ?? false,
-          }))
-        : menuItem.subItems;
-    const posX = "clientX" in event ? event.clientX : 0;
-    const posY = "clientY" in event ? event.clientY : 0;
     eventbus.emit("contextmenu", {
-      items,
-      posX,
-      posY,
+      items: menuItem.subItems,
+      posX: "clientX" in event ? event.clientX : 0,
+      posY: "clientY" in event ? event.clientY : 0,
     });
   } else if (menuItem.action) {
-    // Close overflow menu before executing action
     overflowMenuOpen.value = false;
-    // Execute direct action
     menuItem.action();
   }
 };
 
-// properties
-interface Props {
-  color?: string;
-  icon?: string | Component;
-  title?: string;
-  subtitle?: string;
-  menuItems?: ToolBarMenuItem[];
-  enforceOverflowMenu?: boolean;
-  // shows an "active" dot on the overflow (3-dots) button, e.g. when filters apply
-  menuActive?: boolean;
-  isDiscoverPage?: boolean;
-  iconAction?: () => void;
-}
-withDefaults(defineProps<Props>(), {
-  color: "transparent",
-  icon: undefined,
-  title: undefined,
-  subtitle: undefined,
-  count: undefined,
-  menuItems: undefined,
-  enforceOverflowMenu: false,
-  menuActive: false,
-  iconAction: undefined,
-});
+const updateNavigationHistory = () => {
+  navigationHistory.value = {
+    canGoBack: router.options.history.state.back != null,
+  };
+};
 
-// emitters
-const emit = defineEmits<{
-  (e: "iconClicked"): void;
-  (e: "titleClicked"): void;
-}>();
+updateNavigationHistory();
+const removeAfterEach = router.afterEach(updateNavigationHistory);
+
+onBeforeUnmount(() => removeAfterEach());
+
+const handleBack = () => {
+  if (props.iconAction) props.iconAction();
+  else router.back();
+};
+
+const handleHome = () => {
+  if (canGoHome.value) router.push({ name: "discover" });
+};
 </script>
 
 <script lang="ts">
@@ -219,53 +284,93 @@ export interface ToolBarMenuItem extends ContextMenuItem {
 </script>
 
 <style scoped>
-.header.v-toolbar {
-  height: 55px;
+.header {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  min-height: 55px;
+  color: var(--foreground);
+  background: var(--background);
 }
 
-.header.v-toolbar :deep(.v-toolbar__content) {
-  height: 55px !important;
-  min-height: 55px !important;
-  padding-top: 0;
-  padding-bottom: 0;
+.header__content {
+  display: flex;
+  width: 100%;
+  min-height: 60px;
   align-items: center;
+  gap: 8px;
+  padding-inline: 12px;
 }
 
-.header.v-toolbar :deep(.v-toolbar-title) {
-  margin-inline-start: 10px !important;
+.header__breadcrumb,
+.header__title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
-.header.v-toolbar :deep(.v-toolbar__prepend) {
-  margin-inline-start: 12px !important;
-  margin-inline-end: 0px !important;
+.header__breadcrumb-list {
+  flex-wrap: nowrap;
+  min-width: 0;
+  margin: 0;
+  list-style: none;
+  padding: 0;
 }
 
-.header.v-toolbar > .v-toolbar__content > .v-toolbar__append {
-  margin-inline-end: 5px;
+.header__breadcrumb-page {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
-.header.v-toolbar-default > .v-toolbar__content > .v-toolbar__append {
-  margin-inline-end: 10px;
+.header__breadcrumb-page :deep([data-slot="breadcrumb-page"]) {
+  display: flex;
+  min-height: 40px;
+  min-width: 0;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Mobile branding on the left */
-.toolbar-prepend {
+.header__prepend,
+.header__append,
+.header__overflow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 4px;
 }
 
-.toolbar-title-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  line-height: 1.2;
+.header__append {
+  flex-shrink: 0;
+}
+
+.header--page {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 64px;
+  background: var(--background) !important;
+}
+
+.header--page .header__content {
+  min-height: 64px;
+}
+
+.header--info {
+  background: transparent !important;
+}
+
+.header--scrolled {
+  background: color-mix(in srgb, var(--sidebar) 92%, transparent) !important;
+  backdrop-filter: blur(24px);
 }
 
 .toolbar-subtitle {
-  font-size: 0.7rem;
-  font-weight: 400;
-  opacity: 0.6;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

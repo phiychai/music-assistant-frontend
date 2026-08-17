@@ -1,5 +1,17 @@
 <template>
-  <div>
+  <div class="info-header">
+    <Toolbar
+      variant="info"
+      navigation="back"
+      :title="headerTitle"
+      :menu-items="menuItems"
+      :enforce-overflow-menu="true"
+      :icon-action="backButtonClick"
+    >
+      <template v-if="$slots['toolbar-append']" #append>
+        <slot name="toolbar-append"></slot>
+      </template>
+    </Toolbar>
     <v-card
       variant="flat"
       :img="imgGradient"
@@ -9,7 +21,7 @@
       min-height="340px"
     >
       <!-- loading animation -->
-      <v-progress-linear v-if="!item" indeterminate />
+      <Progress v-if="!item" indeterminate class="h-1 rounded-none" />
       <v-img
         width="100%"
         height="100%"
@@ -25,19 +37,6 @@
         :transition="false"
         eager
       />
-      <!-- The details layout below is transformed, which gives it a stacking
-           context, so the toolbar needs a rank to stay clickable above it. -->
-      <Toolbar
-        :icon="ArrowLeft"
-        style="position: absolute; z-index: 1"
-        :menu-items="menuItems"
-        :enforce-overflow-menu="true"
-        :icon-action="backButtonClick"
-      >
-        <template v-if="$slots['toolbar-append']" #append>
-          <slot name="toolbar-append"></slot>
-        </template>
-      </Toolbar>
       <v-layout
         v-if="item"
         style="
@@ -100,7 +99,6 @@
             :alt="$t('tooltip.artwork')"
             width="auto"
             height="80"
-            style="padding-left: 10px"
           />
           <v-card-title v-else>
             <MarqueeText :sync="marqueeSync">
@@ -495,6 +493,7 @@ import AudioAnalysisMetadata from "@/components/AudioAnalysisMetadata.vue";
 import MarkdownText from "@/components/MarkdownText.vue";
 import Toolbar from "@/components/Toolbar.vue";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -546,7 +545,7 @@ import { authManager } from "@/plugins/auth";
 import { eventbus } from "@/plugins/eventbus";
 import { $t } from "@/plugins/i18n";
 import { store } from "@/plugins/store";
-import { ArrowLeft, Merge, Trash2 } from "@lucide/vue";
+import { Merge, Trash2 } from "@lucide/vue";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-vue";
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
@@ -816,6 +815,11 @@ const collectionNarrators = computed(() => {
 
 .background-image {
   position: absolute;
+}
+
+/* Let the detail artwork continue behind the navigation header. */
+.info-header > :deep(.header--info) {
+  margin-bottom: -64px;
 }
 
 .background-image .v-img__img--cover {

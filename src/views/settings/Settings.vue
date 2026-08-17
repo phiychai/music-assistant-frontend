@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Toolbar :icon="Settings">
+    <Toolbar variant="page" navigation="home">
       <template #title>
         <ToolbarHeading
           :title="t('settings.settings')"
@@ -305,7 +305,6 @@ import { requireServerVersion } from "@/plugins/api/helpers";
 import { ProviderType } from "@/plugins/api/interfaces";
 import { authManager } from "@/plugins/auth";
 import { store } from "@/plugins/store";
-import { Settings } from "@lucide/vue";
 import { match } from "ts-pattern";
 import { computed, provide, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";

@@ -1,6 +1,11 @@
 <template>
   <v-app>
     <v-main>
+      <Toolbar
+        variant="page"
+        navigation="home"
+        :title="$t('not_found_headline')"
+      />
       <div class="not-found">
         <div class="content">
           <!-- Vinyl + needle -->
@@ -62,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+import Toolbar from "@/components/Toolbar.vue";
 import { Button } from "@/components/ui/button";
 import { goBack } from "@/helpers/navigation";
 import { ArrowLeft, Compass } from "@lucide/vue";

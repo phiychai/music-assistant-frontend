@@ -2,7 +2,8 @@
   <div class="ed-discover">
     <Toolbar
       :is-discover-page="true"
-      :icon="Compass"
+      variant="page"
+      navigation="home"
       color="background"
       :title="$t('discover')"
     >
@@ -76,14 +77,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { api } from "@/plugins/api";
 import { authManager } from "@/plugins/auth";
-import {
-  ArrowRight,
-  Check,
-  CircleAlert,
-  Compass,
-  SquarePen,
-  X,
-} from "@lucide/vue";
+import { ArrowRight, Check, CircleAlert, SquarePen, X } from "@lucide/vue";
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 

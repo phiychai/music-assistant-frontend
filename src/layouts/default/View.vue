@@ -7,11 +7,13 @@
       <AppSidebar v-if="!store.frameless" />
       <SidebarInset>
         <div
+          ref="contentSectionRef"
           :class="[
             'content-section',
             { 'content-section--mobile': store.mobileLayout },
             { 'content-section--frameless': store.frameless },
             { 'party-view-active': route.meta.partyView === true },
+            { 'content-section--scrolled': contentScrollState.isScrolled },
           ]"
         >
           <router-view v-slot="{ Component }">
@@ -54,6 +56,7 @@ import PlayerRenameDialog from "@/components/PlayerRenameDialog.vue";
 import PlayerGroupPlaybackDialog from "@/components/PlayerGroupPlaybackDialog.vue";
 import SetupFlowDialog from "@/components/SetupFlowDialog.vue";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { provideContentScrollState } from "@/composables/useContentScrollState";
 import {
   MediaType,
   type Playlist,
@@ -76,8 +79,10 @@ import PlayerSelect from "./PlayerSelect.vue";
 const route = useRoute();
 
 const showEditItemDialog = ref(false);
+const contentSectionRef = ref<HTMLElement | null>(null);
 const editItem = ref<Radio | Track | Playlist | undefined>(undefined);
 const editItemType = ref<MediaType>(MediaType.RADIO);
+const contentScrollState = provideContentScrollState(contentSectionRef);
 
 onMounted(() => {
   eventbus.on("editItemDialog", (item: Radio | Track | Playlist) => {
@@ -119,5 +124,10 @@ onMounted(() => {
 
 .content-section--frameless {
   padding-bottom: 0;
+}
+
+.content-section--scrolled {
+  scrollbar-color: rgba(128, 128, 128, 0.5)
+    color-mix(in srgb, var(--sidebar) 92%, transparent);
 }
 </style>

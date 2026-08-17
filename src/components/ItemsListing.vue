@@ -3,6 +3,8 @@
   <section v-if="!(hideOnEmpty && pagedItems.length == 0 && !hasActiveFilters)">
     <!-- eslint-disable vue/no-template-shadow -->
     <Toolbar
+      :variant="headerVariant"
+      :navigation="headerVariant === 'page' ? 'home' : undefined"
       :icon="icon"
       :title="title"
       :subtitle="subtitle"
@@ -340,6 +342,7 @@ export interface LoadDataParams {
 // properties
 export interface Props {
   itemtype: string;
+  headerVariant?: "section" | "page";
   sortKeys?: string[];
   showTrackNumber?: boolean;
   showProvider?: boolean;
@@ -394,6 +397,7 @@ export interface Props {
   toolBarTabs?: ToolBarTab[];
 }
 const props = withDefaults(defineProps<Props>(), {
+  headerVariant: "section",
   sortKeys: () => ["name", "sort_name"],
   showTrackNumber: true,
   showProvider: Object.keys(api.providers).length > 1,
