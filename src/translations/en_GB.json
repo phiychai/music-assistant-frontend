@@ -756,8 +756,28 @@
         "currently_playing": "Currently playing on",
         "click_to_change": "Click below to change output device"
     },
+    "sidebar": {
+        "title": "Sidebar",
+        "description": "Displays the mobile sidebar.",
+        "toggle": "Toggle Sidebar",
+        "expand": "Expand Sidebar",
+        "collapse": "Collapse Sidebar"
+    },
+    "customize_sidebar": "Customise sidebar",
+    "collapse_sidebar": "Collapse sidebar",
+    "menu_edit_enable": "Edit menu",
+    "menu_edit_disable": "Leave edit mode",
+    "menu_item_hide": "Hide menu item",
+    "menu_item_show": "Show menu item",
+    "menu_section_rename": "Rename section",
+    "menu_section_hide_label": "Hide section label",
+    "menu_section_show_label": "Show section label",
+    "queue_reorder": "Drag to reorder",
     "more_options": "More options",
     "edit": "Edit",
+    "command_center": {
+        "open_full_search": "Open full media search"
+    },
     "smart_playlist": {
         "favorites_yes": "Yes",
         "field_favorite": "Favourite"

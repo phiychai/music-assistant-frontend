@@ -3,15 +3,12 @@ import NavMain from "@/components/navigation/NavMain.vue";
 import NavShortcuts from "@/components/navigation/NavShortcuts.vue";
 import AppLogo from "@/components/AppLogo.vue";
 import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarInput,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -20,12 +17,11 @@ import { authManager } from "@/plugins/auth";
 import { eventbus } from "@/plugins/eventbus";
 import { haState } from "@/plugins/homeassistant";
 import { store } from "@/plugins/store";
-import { Check, LogOut, Moon, PanelLeft, Search, Sun } from "@lucide/vue";
+import { Check, LogOut, Moon, PanelLeft, Sun } from "@lucide/vue";
 import { computed, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import NavHomeAssistant from "./NavHomeAssistant.vue";
-import NavMobile from "./NavMobile.vue";
 import NavHeaderMenu from "./NavHeaderMenu.vue";
 import {
   getMenuItems,
@@ -121,14 +117,6 @@ const handleOpenSidebar = () => {
   }
 };
 
-const openSearchPage = () => {
-  if (searchItem.value?.disabled) return;
-  if (isMobile.value) {
-    setOpenMobile(false);
-  }
-  router.push(searchItem.value?.url ?? "/search");
-};
-
 const toggleTheme = () =>
   setThemePreference(isDarkTheme.value ? "light" : "dark");
 
@@ -153,7 +141,7 @@ onUnmounted(() => {
   <Sidebar collapsible="icon">
     <SidebarHeader>
       <SidebarMenu>
-        <SidebarMenuItem :class="{ 'mb-3': !collapsed }">
+        <SidebarMenuItem>
           <div class="flex w-full items-center justify-between gap-2">
             <div
               class="relative flex min-w-0 cursor-pointer items-center gap-1.5 transition-opacity duration-300 ease-[ease]"
@@ -170,48 +158,10 @@ onUnmounted(() => {
             <NavHeaderMenu v-if="!collapsed" />
           </div>
         </SidebarMenuItem>
-        <SidebarMenuItem v-if="collapsed" class="mb-3 flex w-full items-center">
+        <SidebarMenuItem v-if="collapsed" class="flex w-full items-center">
           <NavHeaderMenu />
         </SidebarMenuItem>
-        <SidebarMenuItem v-if="searchItem && !editMode">
-          <div v-if="!collapsed" class="flex items-center gap-3">
-            <div class="relative min-w-0 flex-auto">
-              <SidebarInput
-                readonly
-                :placeholder="`${t('search')}...`"
-                :aria-label="searchItem.title"
-                class="sidebar-search-input text-muted-foreground cursor-pointer pr-[4.75rem]! h-10"
-                @click="openSearchPage"
-                @keydown.enter.prevent="openSearchPage"
-                @keydown.space.prevent="openSearchPage"
-              />
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                :title="t('command_center.open_full_search')"
-                :aria-label="t('command_center.open_full_search')"
-                data-testid="sidebar-search-open"
-                class="hover:text-foreground absolute top-1/2 right-1.5 -translate-y-1/2"
-                @click.stop="openSearchPage"
-              >
-                <Search />
-              </Button>
-            </div>
-          </div>
-          <template v-else>
-            <SidebarMenuButton
-              as="button"
-              type="button"
-              :tooltip="searchItem.title"
-              :disabled="searchItem.disabled"
-              :aria-label="searchItem.title"
-              class="mx-0!"
-              @click="openSearchPage"
-            >
-              <component :is="searchItem.icon" class="mr-1" />
-            </SidebarMenuButton>
-          </template>
-        </SidebarMenuItem>
+        <!-- Search goes here. -->
       </SidebarMenu>
     </SidebarHeader>
     <SidebarContent class="scroll-fade">
@@ -261,11 +211,10 @@ onUnmounted(() => {
       <!-- Kiosk mode leaves no Home Assistant chrome on screen, so this is the
            only way back to it. -->
       <NavHomeAssistant v-if="haState.kioskModeEnabled" />
-      <NavMobile v-else-if="isMobile" />
-      <ButtonGroup
+      <div
         v-else
-        :orientation="collapsed ? 'vertical' : 'horizontal'"
-        class="w-full items-center justify-center gap-4 px-2 pt-1 [&>button]:rounded-md"
+        class="flex w-full items-center justify-center gap-4 px-2 pt-1 [&>button]:rounded-md"
+        :class="collapsed ? 'flex-col' : 'flex-row'"
       >
         <Button
           variant="ghost"
@@ -302,101 +251,14 @@ onUnmounted(() => {
         >
           <LogOut />
         </Button>
-      </ButtonGroup>
+      </div>
     </SidebarFooter>
   </Sidebar>
 </template>
 
-<style scoped>
-.sidebar-header-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin: 3px 0 0 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  transition: opacity 0.2s ease;
-}
+<style scoped></style>
 
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  margin: 2px 15px 8px 0;
-  gap: 6px;
-  transition: opacity 0.3s ease;
-  position: relative;
-  cursor: pointer;
-}
-
-.menu-edit-done {
-  width: 100%;
-  border-radius: 999px;
-}
-
-:deep([data-sidebar="group"]) {
-  padding-left: 0 !important;
-  padding-right: 0.5rem !important;
-  padding-top: 0.125rem !important;
-  padding-bottom: 0.125rem !important;
-}
-
-:deep([data-sidebar="group-label"]) {
-  height: 1.75rem !important;
-  padding-left: 1rem !important;
-  font-size: 0.875rem !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.01em !important;
-  color: hsl(var(--sidebar-foreground)) !important;
-  opacity: 0.55;
-}
-
-:deep([data-sidebar="menu-button"]) {
-  margin-left: 0.5rem !important;
-  margin-right: 0.5rem !important;
-  min-height: 1.75rem !important;
-  padding-top: 0.125rem !important;
-  padding-bottom: 0.125rem !important;
-}
-
-:deep([data-sidebar="menu-button"] > svg) {
-  width: 1.6rem !important;
-  height: 1.6rem !important;
-  margin-right: 0.5rem !important;
-}
-
-:deep([data-sidebar="menu-button"] > svg.artist-icon) {
-  width: 1.2rem !important;
-  height: 1.2rem !important;
-  margin-right: 0.3rem !important;
-}
-
-:deep([data-sidebar="menu-button"] > svg.genre-icon) {
-  width: auto !important;
-  height: auto !important;
-  margin-right: 0.3rem !important;
-}
-
-@media (min-height: 700px) {
-  :deep([data-sidebar="menu-button"]) {
-    min-height: 2.25rem !important;
-    padding-top: 0.375rem !important;
-    padding-bottom: 0.375rem !important;
-  }
-
-  :deep([data-sidebar="menu-button"] > svg) {
-    width: 2rem !important;
-    height: 2rem !important;
-  }
-
-  :deep([data-sidebar="menu-button"] > svg.artist-icon) {
-    width: 1.4rem !important;
-    height: 1.4rem !important;
-  }
-}
-
-.sidebar-search-input[data-sidebar="input"] {
-  background-color: transparent !important;
-}
-
+<style>
 [data-mobile="true"] [data-sidebar="footer"] [data-sidebar="menu-button"] {
   margin-left: 0 !important;
 }

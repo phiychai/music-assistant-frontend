@@ -2233,6 +2233,8 @@
     "audio_overlay_no_sounds": "No overlay sounds available. Add a provider that offers sound effects.",
     "menu_edit_enable": "Edit menu",
     "menu_edit_disable": "Leave edit mode",
+    "customize_sidebar": "Customize sidebar",
+    "collapse_sidebar": "Collapse sidebar",
     "menu_item_hide": "Hide menu item",
     "menu_item_show": "Show menu item",
     "menu_section_rename": "Rename section",
@@ -2360,5 +2362,8 @@
     "offline_ready": "App ready to work offline",
     "update_available": "A new version is available. Reload to update.",
     "reload": "Reload",
-    "open_settings": "Settings"
+    "open_settings": "Settings",
+    "command_center": {
+        "open_full_search": "Open full media search"
+    }
 }

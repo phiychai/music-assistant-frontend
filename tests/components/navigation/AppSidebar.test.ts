@@ -299,14 +299,6 @@ describe("AppSidebar", () => {
     expect(systemNav.attributes("data-show-action-button")).toBe("false");
   });
 
-  it("navigates to the full search page", async () => {
-    const wrapper = mount(AppSidebar);
-
-    await wrapper.get("input[readonly]").trigger("click");
-
-    expect(router.push).toHaveBeenCalledWith("/search");
-  });
-
   it("renders footer quick actions for sidebar, theme, and sign out", async () => {
     const wrapper = mount(AppSidebar);
 

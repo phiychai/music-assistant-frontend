@@ -52,11 +52,16 @@ const props = defineProps<{
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const { isMobile, setOpenMobile } = useSidebar();
+const { isMobile, setOpenMobile, state } = useSidebar();
+const isSidebarCollapsed = computed(() => state.value === "collapsed");
 const open = ref(true);
 const groupOpen = computed({
   get: () =>
-    !!props.editMode || !props.label || !!props.labelHidden || open.value,
+    !!props.editMode ||
+    !props.label ||
+    !!props.labelHidden ||
+    isSidebarCollapsed.value ||
+    open.value,
   set: (value) => {
     open.value = value;
   },
@@ -134,7 +139,7 @@ const draggedItem = computed(() =>
         :edit-mode="editMode"
       />
       <CollapsibleTrigger
-        v-else-if="label && !labelHidden"
+        v-else-if="label && !labelHidden && !isSidebarCollapsed"
         class="group/heading flex w-full cursor-pointer items-center border-0 bg-transparent text-left text-inherit transition-colors duration-150 ease-out hover:text-sidebar-foreground"
         :aria-label="`${label} collapse toggle`"
       >

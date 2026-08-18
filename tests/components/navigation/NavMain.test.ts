@@ -71,6 +71,7 @@ vi.mock("@/components/ui/sidebar", () => ({
   useSidebar: () => ({
     isMobile: { value: false },
     setOpenMobile: vi.fn(),
+    state: { value: "expanded" },
   }),
 }));
 

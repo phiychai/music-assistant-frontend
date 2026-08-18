@@ -25,7 +25,7 @@ const handleCollapseSidebar = () => {
   <DropdownMenuSub>
     <DropdownMenuSubTrigger>
       <PanelLeft class="size-[18px]" />
-      {{ $t("sidebar") }}
+      {{ $t("sidebar.title") }}
     </DropdownMenuSubTrigger>
     <DropdownMenuSubContent class="min-w-52">
       <DropdownMenuItem @click="handleCustomizeSidebar">
@@ -36,7 +36,7 @@ const handleCollapseSidebar = () => {
       </DropdownMenuItem>
       <DropdownMenuItem @click="handleCollapseSidebar">
         <PanelLeftClose class="size-[18px]" />
-        {{ $t("collapse_sidebar") }}
+        {{ $t("sidebar.collapse") }}
       </DropdownMenuItem>
     </DropdownMenuSubContent>
   </DropdownMenuSub>

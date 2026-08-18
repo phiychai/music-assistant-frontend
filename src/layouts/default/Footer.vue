@@ -38,6 +38,7 @@ import {
 import Player from "./PlayerOSD/Player.vue";
 
 const OVERLAY_HEIGHT_PROPERTY = "--player-bar-overlay-height";
+const PLAYER_BAR_HEIGHT_PROPERTY = "--player-bar-height";
 const OVERLAY_MARKER_ATTRIBUTE = "data-player-bar-overlay";
 
 const playerBar = ref<ComponentPublicInstance>();
@@ -48,6 +49,14 @@ const { height: playerBarHeight } = useElementSize(playerBar, undefined, {
 // on mobile the player bar floats on top of the player bar popouts, which read
 // this marker and height to keep their content clear of it
 watchEffect(() => {
+  const measuredHeight = Math.ceil(playerBarHeight.value);
+  if (measuredHeight > 0) {
+    document.documentElement.style.setProperty(
+      PLAYER_BAR_HEIGHT_PROPERTY,
+      `${measuredHeight}px`,
+    );
+  }
+
   if (!store.mobileLayout) {
     clearOverlay();
     return;
@@ -62,7 +71,10 @@ watchEffect(() => {
 
 // the popouts outlive the player bar in frameless mode, so they must not keep
 // reserving room for a bar that is no longer there
-onBeforeUnmount(clearOverlay);
+onBeforeUnmount(() => {
+  clearOverlay();
+  document.documentElement.style.removeProperty(PLAYER_BAR_HEIGHT_PROPERTY);
+});
 
 function clearOverlay() {
   document.documentElement.style.removeProperty(OVERLAY_HEIGHT_PROPERTY);

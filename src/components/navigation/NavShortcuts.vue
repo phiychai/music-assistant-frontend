@@ -69,7 +69,11 @@ const sectionLabel = computed(
   () => sectionConfig.value.label || t("shortcuts"),
 );
 const groupOpen = computed({
-  get: () => !!props.editMode || !!sectionConfig.value.hide_label || open.value,
+  get: () =>
+    !!props.editMode ||
+    !!sectionConfig.value.hide_label ||
+    isCollapsed.value ||
+    open.value,
   set: (value) => {
     open.value = value;
   },
@@ -207,7 +211,7 @@ const draggedItem = computed(() =>
           :edit-mode="editMode"
         />
         <CollapsibleTrigger
-          v-else-if="!sectionConfig.hide_label"
+          v-else-if="!sectionConfig.hide_label && !isCollapsed"
           class="group/heading flex w-full cursor-pointer items-center border-0 bg-transparent text-left text-inherit transition-colors duration-150 ease-out hover:text-sidebar-foreground"
           :aria-label="`${sectionLabel} collapse toggle`"
         >
